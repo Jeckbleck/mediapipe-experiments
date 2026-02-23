@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Mesh (TensorFlow) | MediaPipe</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="demo-page face-mesh-page">
+    <a href="/" class="back">← Back</a>
+    <h1>Face Mesh — AI Photobooth</h1>
+    <p class="subtitle">478 landmarks • Switch modes to try different effects</p>
+    <div class="face-mesh-layout">
+      <div class="face-mesh-main">
+        <div class="video-container face-swap-preview" id="video-container">
+          <video id="video" style="transform: scaleX(1);" autoplay playsinline muted></video>
+          <canvas id="canvas"></canvas>
+          <div id="overlay" class="overlay-text">—</div>
+          <div id="pose-prompt" class="pose-prompt"></div>
+        </div>
+        <p id="status" class="status">Loading model...</p>
+        <!-- Photo strip preview (shown in Photo Strip mode) -->
+        <div id="photo-strip-preview" class="photo-strip-preview hidden">
+          <h4>Your strip</h4>
+          <div id="photo-strip-canvases" class="photo-strip-canvases"></div>
+          <button type="button" id="btn-download-strip" class="btn-secondary">Download strip</button>
+        </div>
+      </div>
+      <aside class="face-mesh-sidebar">
+        <h3>Mode</h3>
+        <div class="mode-buttons">
+          <button type="button" class="mode-btn active" data-mode="landmarks">Landmarks</button>
+          <button type="button" class="mode-btn" data-mode="ar-props">AR Props</button>
+          <button type="button" class="mode-btn" data-mode="smart-capture">Smart Capture</button>
+          <button type="button" class="mode-btn" data-mode="expression">Expression</button>
+          <button type="button" class="mode-btn" data-mode="pose-guidance">Pose Guidance</button>
+          <button type="button" class="mode-btn" data-mode="photo-strip">Photo Strip</button>
+          <button type="button" class="mode-btn" data-mode="3d-effects">3D Effects</button>
+        </div>
+        <!-- Sub-menus -->
+        <div id="submenu-ar-props" class="submenu hidden">
+          <h4>Select prop</h4>
+          <div class="prop-grid">
+            <button type="button" class="prop-btn" data-prop="glasses">Glasses</button>
+            <button type="button" class="prop-btn" data-prop="hat">Hat</button>
+            <button type="button" class="prop-btn" data-prop="crown">Crown</button>
+            <button type="button" class="prop-btn" data-prop="sunglasses">Sunglasses</button>
+            <button type="button" class="prop-btn" data-prop="mustache">Mustache</button>
+            <button type="button" class="prop-btn" data-prop="bow">Bow</button>
+          </div>
+        </div>
+        <div id="submenu-smart-capture" class="submenu hidden">
+          <h4>Capture trigger</h4>
+          <div class="trigger-buttons">
+            <button type="button" class="trigger-btn" data-trigger="smile">Smile</button>
+            <button type="button" class="trigger-btn" data-trigger="wink">Wink</button>
+            <button type="button" class="trigger-btn" data-trigger="surprise">Surprise</button>
+          </div>
+          <p class="submenu-hint">Photo captures when you do the action</p>
+        </div>
+        <div id="submenu-photo-strip" class="submenu hidden">
+          <h4>Photo strip</h4>
+          <p class="submenu-hint">Follow the prompts for each shot</p>
+          <button type="button" id="btn-start-strip" class="btn-primary">Start strip</button>
+        </div>
+        <div class="landmarks-toggle">
+          <label class="toggle-label">
+            <input type="checkbox" id="show-landmarks" />
+            <span>Show landmarks overlay</span>
+          </label>
+          <p class="submenu-hint">Display mesh in any mode</p>
+        </div>
+        <div class="backend-toggle">
+          <label class="toggle-label">
+            <input type="checkbox" id="use-backend" />
+            <span>Use Python backend</span>
+          </label>
+          <p id="backend-status" class="submenu-hint">Run: npm run backend</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <script type="module" src="/face-mesh.js"></script>
+</body>
+</html>
