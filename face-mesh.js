@@ -1,6 +1,5 @@
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 import "@tensorflow/tfjs-backend-webgl";
-import { isBackendAvailable, processFrame } from "./lib/backendApi.js";
 
 // Landmark indices (MediaPipe Face Mesh)
 const L = {
@@ -108,23 +107,6 @@ function setupUI() {
   document.querySelector(".trigger-btn[data-trigger='smile']")?.classList.add("selected");
   btnDownloadStrip?.addEventListener("click", downloadPhotoStrip);
   document.getElementById("btn-start-strip")?.addEventListener("click", startPhotoStrip);
-  document.getElementById("use-backend")?.addEventListener("change", async () => {
-    const { resetBackendCache } = await import("./lib/backendApi.js");
-    resetBackendCache();
-    await updateBackendStatus();
-  });
-  updateBackendStatus().then((ok) => {
-    if (ok) document.getElementById("use-backend").checked = true;
-  });
-}
-
-async function updateBackendStatus() {
-  const el = document.getElementById("backend-status");
-  if (!el) return false;
-  const ok = await isBackendAvailable();
-  el.textContent = ok ? "✓ Python backend connected" : "Run: npm run backend";
-  el.style.color = ok ? "#4ade80" : "";
-  return ok;
 }
 
 function isShowLandmarksEnabled() {
@@ -420,9 +402,6 @@ function startPhotoStrip() {
 }
 
 let photoStripCooldown = 0;
-let lastBackendRequest = 0;
-const BACKEND_THROTTLE_MS = 120;
-
 function updatePhotoStrip(face) {
   if (!photoStripActive || !face) return;
   const now = Date.now();
@@ -479,40 +458,6 @@ function downloadPhotoStrip() {
 
 async function detect() {
   if (!detector || video.readyState < 2 || video.videoWidth === 0) {
-    animationId = requestAnimationFrame(detect);
-    return;
-  }
-
-  const useBackend = document.getElementById("use-backend")?.checked && (await isBackendAvailable());
-  // Landmarks: always use local detector (reliable, 468 pts). Backend for AR props only.
-  const backendModes = ["ar-props"];
-  const useBackendForThisMode = useBackend && backendModes.includes(currentMode);
-
-  if (useBackendForThisMode && Date.now() - lastBackendRequest > BACKEND_THROTTLE_MS) {
-    lastBackendRequest = Date.now();
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.translate(-canvas.width, 0);
-    ctx.drawImage(video, 0, 0);
-    ctx.restore();
-    const mode = currentMode === "ar-props" ? "ar-props" : "landmarks";
-    const result = await processFrame(canvas, { mode, prop: currentProp });
-    if (result.image) {
-      const img = new Image();
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = `data:image/jpeg;base64,${result.image}`;
-      });
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.translate(-canvas.width, 0);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      ctx.restore();
-      overlay.textContent = result.success ? "Python backend" : (result.error || "No face detected");
-    }
     animationId = requestAnimationFrame(detect);
     return;
   }

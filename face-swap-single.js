@@ -1,7 +1,6 @@
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { overlayFace } from "./lib/faceSwap.js";
 import { log } from "./lib/logger.js";
-import { isBackendAvailable, processFrame } from "./lib/backendApi.js";
 
 const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
@@ -60,10 +59,6 @@ async function init() {
     debugLog(`Ready: canvas ${canvas.width}x${canvas.height}`);
     buildReferenceGrid();
     setupTroubleshooting();
-    document.getElementById("use-backend")?.addEventListener("change", updateBackendStatus);
-    updateBackendStatus().then((ok) => {
-      if (ok) document.getElementById("use-backend").checked = true;
-    });
     statusEl.textContent = "Select a face, then show yours";
     detect();
   } catch (err) {
@@ -172,9 +167,6 @@ let lastTroubleshootUpdate = 0;
 let lastHasVideoFace = false;
 let lastHasReference = false;
 let testCanvasUntil = 0;
-let lastBackendRequest = 0;
-const BACKEND_THROTTLE_MS = 120;
-
 function updateTroubleshootStatus(hasVideoFace, hasReference) {
   if (!troubleshootStatusEl) return;
   const t = performance.now() / 1000;
@@ -191,15 +183,6 @@ function updateTroubleshootStatus(hasVideoFace, hasReference) {
     <div>Your face detected: ${hasVideoFace ? '<span class="ok">✓</span>' : '<span class="warn">✗ show face</span>'}</div>
     <div>Overlay calls: ${overlayCallCount}</div>
   `;
-}
-
-async function updateBackendStatus() {
-  const el = document.getElementById("backend-status");
-  if (!el) return false;
-  const ok = await isBackendAvailable();
-  el.textContent = ok ? "✓ Python backend connected" : "Run: npm run backend";
-  el.style.color = ok ? "#4ade80" : "";
-  return ok;
 }
 
 function setupTroubleshooting() {
@@ -231,36 +214,6 @@ function setupTroubleshooting() {
 
 async function detect() {
   if (!faceLandmarkerVideo || video.readyState < 2) {
-    requestAnimationFrame(detect);
-    return;
-  }
-
-  const useBackend = document.getElementById("use-backend")?.checked && (await isBackendAvailable());
-  const hasReference = !!(selectedImage && selectedImageLandmarks);
-
-  if (useBackend && hasReference && Date.now() - lastBackendRequest > BACKEND_THROTTLE_MS) {
-    lastBackendRequest = Date.now();
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.translate(-canvas.width, 0);
-    ctx.drawImage(video, 0, 0);
-    ctx.restore();
-    const result = await processFrame(canvas, { mode: "face-swap", referenceImage: selectedImage });
-    if (result.image) {
-      const img = new Image();
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = `data:image/jpeg;base64,${result.image}`;
-      });
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.translate(-canvas.width, 0);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      ctx.restore();
-    }
     requestAnimationFrame(detect);
     return;
   }

@@ -2,4 +2,3 @@ node_modules
 dist
 .DS_Store
 public/reference-faces
-backend/face_landmarker.task

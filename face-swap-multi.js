@@ -1,6 +1,5 @@
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { swapFaces } from "./lib/faceSwap.js";
-import { isBackendAvailable, processFrame } from "./lib/backendApi.js";
 
 const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
@@ -8,8 +7,6 @@ const MODEL_PATH =
 
 let faceLandmarker = null;
 let lastVideoTime = -1;
-let lastBackendRequest = 0;
-const BACKEND_THROTTLE_MS = 120;
 
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
@@ -28,10 +25,6 @@ async function init() {
     statusEl.textContent = "Starting camera...";
     await startCamera();
     statusEl.textContent = "Show 2 faces to swap them";
-    document.getElementById("use-backend")?.addEventListener("change", updateBackendStatus);
-    updateBackendStatus().then((ok) => {
-      if (ok) document.getElementById("use-backend").checked = true;
-    });
     detect();
   } catch (err) {
     statusEl.textContent = `Error: ${err.message}`;
@@ -58,45 +51,8 @@ async function startCamera() {
   }
 }
 
-async function updateBackendStatus() {
-  const el = document.getElementById("backend-status");
-  if (!el) return false;
-  const ok = await isBackendAvailable();
-  el.textContent = ok ? "✓ Python backend connected" : "Run: npm run backend";
-  el.style.color = ok ? "#4ade80" : "";
-  return ok;
-}
-
 async function detect() {
   if (!faceLandmarker || video.readyState < 2) {
-    requestAnimationFrame(detect);
-    return;
-  }
-
-  const useBackend = document.getElementById("use-backend")?.checked && (await isBackendAvailable());
-  if (useBackend && Date.now() - lastBackendRequest > BACKEND_THROTTLE_MS) {
-    lastBackendRequest = Date.now();
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.translate(-canvas.width, 0);
-    ctx.drawImage(video, 0, 0);
-    ctx.restore();
-    const result = await processFrame(canvas, { mode: "face-swap-multi" });
-    if (result.image) {
-      const img = new Image();
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = `data:image/jpeg;base64,${result.image}`;
-      });
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.translate(-canvas.width, 0);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      ctx.restore();
-    }
     requestAnimationFrame(detect);
     return;
   }
