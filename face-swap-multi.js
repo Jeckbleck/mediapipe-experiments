@@ -57,24 +57,15 @@ async function detect() {
     return;
   }
 
-  const now = performance.now() / 1000;
+  const now = performance.now();
   if (lastVideoTime !== video.currentTime) {
     lastVideoTime = video.currentTime;
     const results = faceLandmarker.detectForVideo(video, now);
 
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.translate(-canvas.width, 0);
     ctx.drawImage(video, 0, 0);
-    ctx.restore();
 
     if (results.faceLandmarks?.length >= 2) {
       try {
-        ctx.save();
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.translate(-canvas.width, 0);
         swapFaces(
           ctx,
           video,
@@ -83,7 +74,6 @@ async function detect() {
           canvas.width,
           canvas.height
         );
-        ctx.restore();
       } catch (e) {
         console.warn("Face swap error:", e);
       }

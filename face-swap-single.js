@@ -187,7 +187,7 @@ function updateTroubleshootStatus(hasVideoFace, hasReference) {
 
 function setupTroubleshooting() {
   document.getElementById("btn-test-canvas")?.addEventListener("click", () => {
-    testCanvasUntil = performance.now() / 1000 + 5;
+    testCanvasUntil = performance.now() + 5000;
     debugLog("Test: Red box will show for 5 sec. If you see it, canvas works.");
   });
 
@@ -196,18 +196,13 @@ function setupTroubleshooting() {
       debugLog("Test: Select a reference image first.");
       return;
     }
-    const results = faceLandmarkerVideo.detectForVideo(video, performance.now() / 1000);
+    const results = faceLandmarkerVideo.detectForVideo(video, performance.now());
     if (!results.faceLandmarks?.length) {
       debugLog("Test: Show your face to the camera first.");
       return;
     }
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.translate(-canvas.width, 0);
     ctx.drawImage(video, 0, 0);
     overlayFace(ctx, selectedImage, selectedImageLandmarks, results.faceLandmarks[0], canvas.width, canvas.height);
-    ctx.restore();
     debugLog("Test: Overlay drawn once. Check if you see the swapped face.");
   });
 }
@@ -218,7 +213,7 @@ async function detect() {
     return;
   }
 
-  const now = performance.now() / 1000;
+  const now = performance.now();
   if (lastVideoTime !== video.currentTime) {
     lastVideoTime = video.currentTime;
     const results = faceLandmarkerVideo.detectForVideo(video, now);
@@ -226,19 +221,14 @@ async function detect() {
     if (canvas.width === 0 || canvas.height === 0) {
       log.warn("Canvas has zero size, skipping draw");
     } else {
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.translate(-canvas.width, 0);
       ctx.drawImage(video, 0, 0);
-      if (performance.now() / 1000 < testCanvasUntil) {
+      if (now < testCanvasUntil) {
         ctx.fillStyle = "rgba(255,0,0,0.9)";
         ctx.fillRect(10, 10, 180, 80);
         ctx.fillStyle = "white";
         ctx.font = "bold 28px sans-serif";
         ctx.fillText("CANVAS OK", 30, 55);
       }
-      ctx.restore();
     }
 
     const hasVideoFace = results.faceLandmarks?.length > 0;
@@ -246,14 +236,14 @@ async function detect() {
     lastHasVideoFace = hasVideoFace;
     lastHasReference = hasRef;
 
-    if (!hasVideoFace && hasRef && now - lastLogTime > 3) {
+    if (!hasVideoFace && hasRef && now - lastLogTime > 3000) {
       debugLog("Waiting for your face... (select reference first, then show face)");
       lastLogTime = now;
     }
 
     if (hasVideoFace && hasRef) {
       overlayCallCount++;
-      if (now - lastLogTime > 2) {
+      if (now - lastLogTime > 2000) {
         log.info("Overlay active", {
           videoFaces: results.faceLandmarks.length,
           overlayCalls: overlayCallCount,
@@ -263,10 +253,6 @@ async function detect() {
         lastLogTime = now;
       }
       try {
-        ctx.save();
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.translate(-canvas.width, 0);
         overlayFace(
           ctx,
           selectedImage,
@@ -284,7 +270,6 @@ async function detect() {
           ctx.fillStyle = "rgba(0,255,0,0.3)";
           ctx.fillRect(minX, minY, maxX - minX, maxY - minY);
         }
-        ctx.restore();
       } catch (e) {
         log.error("Face overlay error", e);
         debugLog(`Overlay error: ${e.message}`);
