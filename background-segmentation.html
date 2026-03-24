@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background Segmentation | MediaPipe</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="demo-page">
+    <a href="/" class="back">← Back</a>
+    <h1>Background Segmentation</h1>
+    <p class="subtitle">Remove, blur, or replace your background in real-time</p>
+    <div class="seg-layout">
+      <div class="seg-main">
+        <div class="video-container face-swap-preview" id="video-container">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="canvas"></canvas>
+        </div>
+        <p id="status" class="status">Loading model...</p>
+      </div>
+      <aside class="seg-sidebar">
+        <h3>Effect</h3>
+        <div class="mode-buttons">
+          <button type="button" class="mode-btn active" data-mode="blur">Blur Background</button>
+          <button type="button" class="mode-btn" data-mode="remove">Remove Background</button>
+          <button type="button" class="mode-btn" data-mode="image">Replace Background</button>
+          <button type="button" class="mode-btn" data-mode="grayscale">Grayscale Background</button>
+          <button type="button" class="mode-btn" data-mode="none">No Effect</button>
+        </div>
+
+        <div id="submenu-blur" class="submenu">
+          <h4>Blur strength</h4>
+          <input type="range" id="blur-amount" min="2" max="40" value="15" class="seg-slider" />
+          <span id="blur-value" class="slider-value">15px</span>
+        </div>
+
+        <div id="submenu-remove" class="submenu hidden">
+          <h4>Background color</h4>
+          <div class="color-options">
+            <button type="button" class="color-btn selected" data-color="#000000" style="background:#000"></button>
+            <button type="button" class="color-btn" data-color="#ffffff" style="background:#fff"></button>
+            <button type="button" class="color-btn" data-color="#00ff00" style="background:#0f0"></button>
+            <button type="button" class="color-btn" data-color="#6366f1" style="background:#6366f1"></button>
+          </div>
+        </div>
+
+        <div id="submenu-image" class="submenu hidden">
+          <h4>Choose background</h4>
+          <div id="bg-grid" class="bg-grid"></div>
+          <label class="upload-label">
+            <input type="file" id="bg-upload" accept="image/*" hidden />
+            <span class="btn-secondary">Upload image</span>
+          </label>
+        </div>
+
+        <div class="seg-edge-toggle">
+          <label class="toggle-label">
+            <input type="checkbox" id="smooth-edges" checked />
+            <span>Smooth edges</span>
+          </label>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <script type="module" src="/background-segmentation.js"></script>
+</body>
+</html>
