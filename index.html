@@ -7,41 +7,181 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <main class="landing">
-    <h1>MediaPipe Experiments</h1>
-    <p class="subtitle">Facial expression, gesture recognition & face swap demos</p>
-    <nav class="demo-links">
-      <a href="/face.html" class="demo-card">
-        <span class="emoji">😊</span>
-        <h2>Facial Expression</h2>
-        <p>Detect your facial expressions in real-time</p>
-      </a>
-      <a href="/gesture.html" class="demo-card">
-        <span class="emoji">✋</span>
-        <h2>Gesture Recognition</h2>
-        <p>Recognize hand gestures like thumbs up, victory, and more</p>
-      </a>
-      <a href="/face-swap-multi.html" class="demo-card">
-        <span class="emoji">👥</span>
-        <h2>Face Swap (Multi-Person)</h2>
-        <p>Swap faces between two people in the shot</p>
-      </a>
-      <a href="/face-swap-single.html" class="demo-card">
-        <span class="emoji">🖼️</span>
-        <h2>Face Swap (Single Person)</h2>
-        <p>Swap your face with a reference image</p>
-      </a>
-      <a href="/face-mesh.html" class="demo-card">
-        <span class="emoji">🔷</span>
-        <h2>Face Mesh (TensorFlow)</h2>
-        <p>478 face landmarks with TensorFlow.js</p>
-      </a>
-      <a href="/background-segmentation.html" class="demo-card">
-        <span class="emoji">🖼️</span>
-        <h2>Background Segmentation</h2>
-        <p>Remove, blur, or replace your background in real-time</p>
-      </a>
-    </nav>
-  </main>
+  <div class="app">
+    <header class="app-header">
+      <h1>MediaPipe Experiments</h1>
+      <p id="status" class="status">Select a feature to begin</p>
+    </header>
+
+    <div class="app-layout">
+      <!-- Left: Feature selection -->
+      <aside class="panel panel-left">
+        <h3 class="panel-title">Features</h3>
+        <div class="feature-list" id="feature-list">
+          <label class="feature-option">
+            <input type="radio" name="feature" value="expression">
+            <span class="feature-label"><span class="feature-icon">😊</span> Expression</span>
+          </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="gesture">
+            <span class="feature-label"><span class="feature-icon">✋</span> Gesture</span>
+          </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="face-mesh">
+            <span class="feature-label"><span class="feature-icon">🔷</span> Face Mesh</span>
+          </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="face-swap-single">
+            <span class="feature-label"><span class="feature-icon">🖼️</span> Face Swap</span>
+          </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="face-swap-multi">
+            <span class="feature-label"><span class="feature-icon">👥</span> Multi Swap</span>
+          </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="segmentation">
+            <span class="feature-label"><span class="feature-icon">🌄</span> Background</span>
+          </label>
+        </div>
+      </aside>
+
+      <!-- Center: Camera preview -->
+      <main class="app-main">
+        <div class="video-container face-swap-preview" id="video-container">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="canvas"></canvas>
+          <div id="overlay" class="overlay-text hidden"></div>
+          <div id="pose-prompt" class="pose-prompt hidden"></div>
+        </div>
+        <div id="photo-strip-preview" class="photo-strip-preview hidden">
+          <h4>Your Photo Strip</h4>
+          <div id="photo-strip-canvases" class="photo-strip-canvases"></div>
+          <button type="button" id="btn-download-strip" class="btn-secondary">Download strip</button>
+        </div>
+      </main>
+
+      <!-- Right: Feature settings -->
+      <aside class="panel panel-right" id="settings-panel">
+        <!-- Placeholder -->
+        <div class="feature-settings" data-feature="none" id="settings-none">
+          <h3 class="panel-title">Settings</h3>
+          <p class="settings-hint">Pick a feature from the left panel to get started.</p>
+        </div>
+
+        <!-- Expression Detection -->
+        <div class="feature-settings hidden" data-feature="expression">
+          <h3 class="panel-title">Expression Detection</h3>
+          <p class="settings-hint">Detects facial expressions like smile, wink, surprise, frown, and more using face landmark blendshapes.</p>
+          <p class="settings-hint">Simply show your face to the camera.</p>
+        </div>
+
+        <!-- Gesture Recognition -->
+        <div class="feature-settings hidden" data-feature="gesture">
+          <h3 class="panel-title">Gesture Recognition</h3>
+          <p class="settings-hint">Recognizes hand gestures like thumbs up, victory, open palm, pointing, and more.</p>
+          <p class="settings-hint">Show your hand to the camera.</p>
+        </div>
+
+        <!-- Face Mesh -->
+        <div class="feature-settings hidden" data-feature="face-mesh">
+          <h3 class="panel-title">Face Mesh</h3>
+          <div class="mode-buttons" id="mesh-modes">
+            <button type="button" class="mode-btn active" data-mode="landmarks">Landmarks</button>
+            <button type="button" class="mode-btn" data-mode="ar-props">AR Props</button>
+            <button type="button" class="mode-btn" data-mode="smart-capture">Smart Capture</button>
+            <button type="button" class="mode-btn" data-mode="expression">Expression</button>
+            <button type="button" class="mode-btn" data-mode="pose-guidance">Pose Guidance</button>
+            <button type="button" class="mode-btn" data-mode="photo-strip">Photo Strip</button>
+            <button type="button" class="mode-btn" data-mode="3d-effects">3D Effects</button>
+          </div>
+          <div id="submenu-ar-props" class="submenu hidden">
+            <h4>Select prop</h4>
+            <div class="prop-grid">
+              <button type="button" class="prop-btn" data-prop="glasses">Glasses</button>
+              <button type="button" class="prop-btn" data-prop="hat">Hat</button>
+              <button type="button" class="prop-btn" data-prop="crown">Crown</button>
+              <button type="button" class="prop-btn" data-prop="sunglasses">Sunglasses</button>
+              <button type="button" class="prop-btn" data-prop="mustache">Mustache</button>
+              <button type="button" class="prop-btn" data-prop="bow">Bow</button>
+            </div>
+          </div>
+          <div id="submenu-smart-capture" class="submenu hidden">
+            <h4>Capture trigger</h4>
+            <div class="trigger-buttons">
+              <button type="button" class="trigger-btn" data-trigger="smile">Smile</button>
+              <button type="button" class="trigger-btn" data-trigger="wink">Wink</button>
+              <button type="button" class="trigger-btn" data-trigger="surprise">Surprise</button>
+            </div>
+            <p class="submenu-hint">Photo captures when you do the action</p>
+          </div>
+          <div id="submenu-photo-strip" class="submenu hidden">
+            <h4>Photo Strip</h4>
+            <p class="submenu-hint">Follow the prompts for each shot</p>
+            <button type="button" id="btn-start-strip" class="btn-primary">Start strip</button>
+          </div>
+          <div class="landmarks-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" id="show-landmarks" />
+              <span>Show landmarks overlay</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Face Swap Single -->
+        <div class="feature-settings hidden" data-feature="face-swap-single">
+          <h3 class="panel-title">Choose a Reference Face</h3>
+          <p class="settings-hint">Select a face below, then show yours to the camera.</p>
+          <div id="reference-grid" class="reference-grid"></div>
+        </div>
+
+        <!-- Face Swap Multi -->
+        <div class="feature-settings hidden" data-feature="face-swap-multi">
+          <h3 class="panel-title">Multi-Person Face Swap</h3>
+          <p class="settings-hint">Show 2 faces to the camera. Their faces will be swapped automatically using Delaunay triangulation.</p>
+        </div>
+
+        <!-- Background Segmentation -->
+        <div class="feature-settings hidden" data-feature="segmentation">
+          <h3 class="panel-title">Background Effects</h3>
+          <div class="mode-buttons" id="seg-modes">
+            <button type="button" class="seg-mode-btn mode-btn active" data-mode="blur">Blur</button>
+            <button type="button" class="seg-mode-btn mode-btn" data-mode="remove">Remove</button>
+            <button type="button" class="seg-mode-btn mode-btn" data-mode="image">Replace</button>
+            <button type="button" class="seg-mode-btn mode-btn" data-mode="grayscale">Grayscale</button>
+            <button type="button" class="seg-mode-btn mode-btn" data-mode="none">None</button>
+          </div>
+          <div id="submenu-seg-blur" class="submenu">
+            <h4>Blur strength</h4>
+            <input type="range" id="blur-amount" min="2" max="40" value="15" class="seg-slider" />
+            <span id="blur-value" class="slider-value">15px</span>
+          </div>
+          <div id="submenu-seg-remove" class="submenu hidden">
+            <h4>Background color</h4>
+            <div class="color-options">
+              <button type="button" class="color-btn selected" data-color="#000000" style="background:#000"></button>
+              <button type="button" class="color-btn" data-color="#ffffff" style="background:#fff"></button>
+              <button type="button" class="color-btn" data-color="#00ff00" style="background:#0f0"></button>
+              <button type="button" class="color-btn" data-color="#6366f1" style="background:#6366f1"></button>
+            </div>
+          </div>
+          <div id="submenu-seg-image" class="submenu hidden">
+            <h4>Choose background</h4>
+            <div id="bg-grid" class="bg-grid"></div>
+            <label class="upload-label">
+              <input type="file" id="bg-upload" accept="image/*" hidden />
+              <span class="btn-secondary">Upload image</span>
+            </label>
+          </div>
+          <div class="seg-edge-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" id="smooth-edges" checked />
+              <span>Smooth edges</span>
+            </label>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
