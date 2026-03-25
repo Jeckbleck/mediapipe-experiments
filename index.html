@@ -130,14 +130,14 @@
         <!-- Face Swap Single -->
         <div class="feature-settings hidden" data-feature="face-swap-single">
           <h3 class="panel-title">Choose a Reference Face</h3>
-          <p class="settings-hint">Select a face below, then show yours to the camera.</p>
+          <p class="settings-hint">Select a reference face, then show yours. Their face is mesh-warped onto your pose using the same landmarks as multi-person swap (CPU-heavy).</p>
           <div id="reference-grid" class="reference-grid"></div>
         </div>
 
         <!-- Face Swap Multi -->
         <div class="feature-settings hidden" data-feature="face-swap-multi">
           <h3 class="panel-title">Multi-Person Face Swap</h3>
-          <p class="settings-hint">Show 2 faces to the camera. Their faces will be swapped automatically using Delaunay triangulation.</p>
+          <p class="settings-hint">Show 2 faces to the camera. Faces are swapped using the official MediaPipe face mesh triangles (CPU-heavy).</p>
         </div>
 
         <!-- Background Segmentation -->

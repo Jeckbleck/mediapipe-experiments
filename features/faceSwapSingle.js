@@ -1,5 +1,5 @@
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import { overlayFace } from "../lib/faceSwap.js";
+import { warpReferenceFaceOntoTarget } from "../lib/faceSwap.js";
 
 const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
@@ -127,7 +127,7 @@ function detect() {
 
     if (results.faceLandmarks?.length > 0 && selectedImage && selectedImageLandmarks) {
       try {
-        overlayFace(
+        warpReferenceFaceOntoTarget(
           shared.ctx,
           selectedImage,
           selectedImageLandmarks,
@@ -136,7 +136,7 @@ function detect() {
           shared.canvas.height
         );
       } catch (e) {
-        console.warn("Face overlay error:", e);
+        console.warn("Face warp error:", e);
       }
     }
   }
