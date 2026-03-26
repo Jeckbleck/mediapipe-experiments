@@ -42,6 +42,10 @@
             <input type="radio" name="feature" value="segmentation">
             <span class="feature-label"><span class="feature-icon">🌄</span> Background</span>
           </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="emotion">
+            <span class="feature-label"><span class="feature-icon">🎭</span> Emotion</span>
+          </label>
         </div>
       </aside>
 
@@ -140,6 +144,14 @@
           <p class="settings-hint">Show 2 faces to the camera. Faces are swapped using the official MediaPipe face mesh triangles (CPU-heavy).</p>
         </div>
 
+        <!-- Emotion Detection -->
+        <div class="feature-settings hidden" data-feature="emotion">
+          <h3 class="panel-title">Emotion Detection</h3>
+          <p class="settings-hint">Detects 6 basic emotions — Happy, Sad, Angry, Surprised, Disgusted, Fearful — from 52 facial muscle signals (blendshapes).</p>
+          <p class="settings-hint">A live confidence chart is drawn on the preview. The dominant emotion is shown in the status overlay.</p>
+          <p class="settings-hint">Show your face to the camera.</p>
+        </div>
+
         <!-- Background Segmentation -->
         <div class="feature-settings hidden" data-feature="segmentation">
           <h3 class="panel-title">Background Effects</h3>
@@ -176,6 +188,10 @@
             <label class="toggle-label">
               <input type="checkbox" id="smooth-edges" checked />
               <span>Smooth edges</span>
+            </label>
+            <label class="toggle-label">
+              <input type="checkbox" id="seg-temporal-smooth" />
+              <span>Stabilize mask (CPU, slower — reduces flicker)</span>
             </label>
           </div>
         </div>

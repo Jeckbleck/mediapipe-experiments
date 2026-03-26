@@ -14,6 +14,7 @@ const featureLoaders = {
   "face-swap-single": () => import("./features/faceSwapSingle.js"),
   "face-swap-multi": () => import("./features/faceSwapMulti.js"),
   segmentation: () => import("./features/segmentation.js"),
+  emotion: () => import("./features/emotion.js"),
 };
 
 const moduleCache = {};
@@ -24,7 +25,12 @@ let cameraReady = false;
 async function startCamera() {
   if (cameraReady) return;
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: 640, height: 480, facingMode: "user" },
+    video: {
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      facingMode: "user",
+      frameRate: { ideal: 30, max: 60 },
+    },
   });
   video.srcObject = stream;
   await new Promise((resolve, reject) => {
