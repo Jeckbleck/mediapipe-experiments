@@ -22,12 +22,31 @@ let currentModule = null;
 let currentFeature = null;
 let cameraReady = false;
 
+/** Match canvas backing store to the current video frame size (tracks camera / resolution changes). */
+function resizeCanvasToVideo() {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if (vw > 0 && vh > 0 && (canvas.width !== vw || canvas.height !== vh)) {
+    canvas.width = vw;
+    canvas.height = vh;
+    video.dispatchEvent(new CustomEvent("videocanvasresize", { detail: { width: vw, height: vh } }));
+  }
+}
+
+video.addEventListener("resize", () => {
+  resizeCanvasToVideo();
+});
+
+video.addEventListener("loadedmetadata", () => {
+  resizeCanvasToVideo();
+});
+
 async function startCamera() {
   if (cameraReady) return;
   const stream = await navigator.mediaDevices.getUserMedia({
     video: {
-      width: { ideal: 640 },
-      height: { ideal: 480 },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
       facingMode: "user",
       frameRate: { ideal: 30, max: 60 },
     },
@@ -38,8 +57,7 @@ async function startCamera() {
     if (video.readyState >= 1) onReady();
     else video.onloadedmetadata = onReady;
   });
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  resizeCanvasToVideo();
   cameraReady = true;
 }
 
@@ -64,6 +82,7 @@ async function switchFeature(name) {
 
   try {
     await startCamera();
+    resizeCanvasToVideo();
     if (!moduleCache[name]) {
       moduleCache[name] = await featureLoaders[name]();
     }

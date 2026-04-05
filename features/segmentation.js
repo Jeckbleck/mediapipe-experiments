@@ -31,8 +31,17 @@ const personCanvas = document.createElement("canvas");
 const personCtx = personCanvas.getContext("2d");
 let maskImageData = null;
 
+function onVideoCanvasResize() {
+  lastVideoTime = -1;
+  if (shared) {
+    personCanvas.width = shared.canvas.width;
+    personCanvas.height = shared.canvas.height;
+  }
+}
+
 export async function activate(s) {
   shared = s;
+  s.video.addEventListener("videocanvasresize", onVideoCanvasResize);
 
   personCanvas.width = shared.canvas.width;
   personCanvas.height = shared.canvas.height;
@@ -61,6 +70,8 @@ export async function activate(s) {
 export function deactivate() {
   if (animationId) cancelAnimationFrame(animationId);
   animationId = null;
+  const v = shared?.video;
+  if (v) v.removeEventListener("videocanvasresize", onVideoCanvasResize);
   shared = null;
 }
 

@@ -143,6 +143,7 @@ const PHOTO_STRIP_PROMPTS = ["Neutral", "Smile!", "Silly face!", "Wink!"];
 
 export async function activate(s) {
   shared = s;
+  s.video.addEventListener("videocanvasresize", onVideoCanvasResize);
 
   if (!faceLandmarker) {
     shared.statusEl.textContent = "Loading Face Mesh (MediaPipe)...";
@@ -171,6 +172,8 @@ export function deactivate() {
   if (animationId) cancelAnimationFrame(animationId);
   animationId = null;
   photoStripActive = false;
+  const v = shared?.video;
+  if (v) v.removeEventListener("videocanvasresize", onVideoCanvasResize);
   shared = null;
 }
 
@@ -380,6 +383,10 @@ function getHeadPose(landmarks) {
 
 let lastCaptureTime = 0;
 const CAPTURE_COOLDOWN = 1500;
+
+function onVideoCanvasResize() {
+  lastVideoTime = -1;
+}
 
 function checkSmartCapture(landmarks) {
   const now = Date.now();

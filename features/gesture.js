@@ -20,8 +20,13 @@ let animationId = null;
 let lastVideoTime = -1;
 let shared = null;
 
+function onVideoCanvasResize() {
+  lastVideoTime = -1;
+}
+
 export async function activate(s) {
   shared = s;
+  s.video.addEventListener("videocanvasresize", onVideoCanvasResize);
 
   if (!gestureRecognizer) {
     shared.statusEl.textContent = "Loading gesture model...";
@@ -43,6 +48,8 @@ export async function activate(s) {
 export function deactivate() {
   if (animationId) cancelAnimationFrame(animationId);
   animationId = null;
+  const v = shared?.video;
+  if (v) v.removeEventListener("videocanvasresize", onVideoCanvasResize);
   shared = null;
 }
 

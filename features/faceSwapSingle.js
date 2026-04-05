@@ -8,8 +8,8 @@ const MODEL_PATH =
 const REFERENCE_IMAGES = [
   { name: "Donnie", url: "/reference-faces/donnie.jpg" },
   { name: "Ye", url: "/reference-faces/ye.jpg" },
-  { name: "Person 3", url: "https://randomuser.me/api/portraits/men/22.jpg" },
-  { name: "Person 4", url: "https://randomuser.me/api/portraits/women/89.jpg" },
+  { name: "Person 3", url: "/reference-faces/bale.jpg" },
+  { name: "Person 4", url: "/reference-faces/kim.jpg" },
   { name: "Person 5", url: "https://randomuser.me/api/portraits/men/45.jpg" },
   { name: "Person 6", url: "https://randomuser.me/api/portraits/women/32.jpg" },
 ];
@@ -24,8 +24,13 @@ let selectedImage = null;
 let selectedImageLandmarks = null;
 let gridBuilt = false;
 
+function onVideoCanvasResize() {
+  lastVideoTime = -1;
+}
+
 export async function activate(s) {
   shared = s;
+  s.video.addEventListener("videocanvasresize", onVideoCanvasResize);
 
   if (!faceLandmarkerVideo) {
     shared.statusEl.textContent = "Loading face swap model...";
@@ -57,6 +62,8 @@ export async function activate(s) {
 export function deactivate() {
   if (animationId) cancelAnimationFrame(animationId);
   animationId = null;
+  const v = shared?.video;
+  if (v) v.removeEventListener("videocanvasresize", onVideoCanvasResize);
   shared = null;
 }
 
