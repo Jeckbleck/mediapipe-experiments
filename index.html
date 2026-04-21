@@ -54,6 +54,10 @@
             <input type="radio" name="feature" value="frame-capture">
             <span class="feature-label"><span class="feature-icon"></span> Frame</span>
           </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="hand-eq">
+            <span class="feature-label"><span class="feature-icon"></span> Hand EQ</span>
+          </label>
         </div>
       </aside>
 
@@ -239,6 +243,25 @@
           </div>
           <button type="button" id="frame-reset-btn" class="btn-secondary" style="width:100%;margin-top:0.75rem;text-align:center">Reset frame</button>
           <p class="settings-hint" style="margin-top:0.5rem">Auto-resets 3 s after hands leave view. Move hands to reposition the frame while frozen.</p>
+        </div>
+
+        <!-- Hand EQ -->
+        <div class="feature-settings hidden" data-feature="hand-eq">
+          <h3 class="panel-title">Hand EQ</h3>
+          <p class="settings-hint">Share a browser tab with audio, then raise both hands. Each fingertip controls one of 10 EQ bands (±12 dB).</p>
+          <div class="eq-hand-map">
+            <div class="eq-hand-row">
+              <span class="eq-dot" style="background:#818cf8"></span>
+              <span><strong>Left hand</strong> — 31 Hz to 500 Hz (pinky → thumb)</span>
+            </div>
+            <div class="eq-hand-row">
+              <span class="eq-dot" style="background:#34d399"></span>
+              <span><strong>Right hand</strong> — 1 kHz to 16 kHz (thumb → pinky)</span>
+            </div>
+          </div>
+          <p class="settings-hint" style="margin-top:0.5rem">Finger up = boost · Finger down = cut · Gains hold when hand leaves view.</p>
+          <button type="button" id="eq-connect-btn" class="btn-primary" style="width:100%;margin-top:0.75rem">Connect audio</button>
+          <button type="button" id="eq-flat-btn" class="btn-secondary" style="width:100%;margin-top:0.5rem">Flatten EQ</button>
         </div>
 
         <!-- Pinch Controller -->

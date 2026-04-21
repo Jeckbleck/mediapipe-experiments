@@ -882,6 +882,29 @@ body {
   border-radius: 50%;
 }
 
+/* Hand EQ */
+.eq-hand-map {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.eq-hand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.eq-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 /* Responsive */
 @media (max-width: 960px) {
   .app-layout {

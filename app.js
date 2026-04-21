@@ -17,6 +17,7 @@ const featureLoaders = {
   emotion: () => import("./features/emotion.js"),
   "pinch-controller": () => import("./features/pinchController.js"),
   "frame-capture": () => import("./features/frameCapture.js"),
+  "hand-eq": () => import("./features/handEQ.js"),
 };
 
 const moduleCache = {};
