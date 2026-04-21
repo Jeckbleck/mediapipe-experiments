@@ -46,6 +46,14 @@
             <input type="radio" name="feature" value="emotion">
             <span class="feature-label"><span class="feature-icon"></span> Emotion</span>
           </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="pinch-controller">
+            <span class="feature-label"><span class="feature-icon"></span> Pinch</span>
+          </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="frame-capture">
+            <span class="feature-label"><span class="feature-icon"></span> Frame</span>
+          </label>
         </div>
       </aside>
 
@@ -57,6 +65,10 @@
           <div id="overlay" class="overlay-text hidden"></div>
           <div id="pose-prompt" class="pose-prompt hidden"></div>
         </div>
+        <div id="frame-carousel-wrap" class="frame-carousel-wrap hidden">
+          <div id="frame-carousel" class="frame-carousel"></div>
+        </div>
+
         <div id="photo-strip-preview" class="photo-strip-preview hidden">
           <h4>Your Photo Strip</h4>
           <div id="photo-strip-canvases" class="photo-strip-canvases"></div>
@@ -193,6 +205,70 @@
               <input type="checkbox" id="seg-temporal-smooth" />
               <span>Stabilize mask (CPU, slower — reduces flicker)</span>
             </label>
+          </div>
+        </div>
+        <!-- Frame Capture -->
+        <div class="feature-settings hidden" data-feature="frame-capture">
+          <h3 class="panel-title">Frame Capture</h3>
+          <p class="settings-hint">Extend your index fingers and thumbs on both hands. The four fingertips become the corners of a frame.</p>
+          <div class="frame-phases">
+            <div class="frame-phase">
+              <span class="frame-phase-dot" style="background:hsl(0,85%,60%)"></span>
+              <span><strong>Stage 1</strong> — frame the background, hold still</span>
+            </div>
+            <div class="frame-phase">
+              <span class="frame-phase-dot" style="background:#6366f1"></span>
+              <span>Countdown freezes the background</span>
+            </div>
+            <div class="frame-phase">
+              <span class="frame-phase-dot" style="background:#818cf8"></span>
+              <span>Move freely inside the live window</span>
+            </div>
+            <div class="frame-phase">
+              <span class="frame-phase-dot" style="background:#34d399"></span>
+              <span><strong>Stage 2</strong> — hold still again to capture</span>
+            </div>
+          </div>
+          <div id="frame-dir-section" class="submenu" style="margin-top:0.75rem">
+            <h4>Save location</h4>
+            <div class="frame-dir-row">
+              <button type="button" id="frame-dir-btn" class="btn-secondary">Choose folder</button>
+              <span id="frame-dir-label" class="frame-dir-label">None selected</span>
+            </div>
+            <p class="settings-hint" style="margin-top:0.4rem">Auto-saves each capture as JPEG. Click a thumbnail to download.</p>
+          </div>
+          <button type="button" id="frame-reset-btn" class="btn-secondary" style="width:100%;margin-top:0.75rem;text-align:center">Reset frame</button>
+          <p class="settings-hint" style="margin-top:0.5rem">Auto-resets 3 s after hands leave view. Move hands to reposition the frame while frozen.</p>
+        </div>
+
+        <!-- Pinch Controller -->
+        <div class="feature-settings hidden" data-feature="pinch-controller">
+          <h3 class="panel-title">Pinch Controller</h3>
+          <p class="settings-hint">Index finger + thumb on each hand act as two independent control axes. Pinch distance, position, and which hand is active all feed the selected effect.</p>
+          <div class="mode-buttons" id="pinch-modes">
+            <button type="button" class="mode-btn active" data-mode="sine">Sine Wave</button>
+            <button type="button" class="mode-btn" data-mode="lissajous">Lissajous</button>
+            <button type="button" class="mode-btn" data-mode="mirror">Mirror Split</button>
+          </div>
+          <div id="pinch-sub-sine" class="submenu pinch-submenu">
+            <h4>Controls</h4>
+            <p class="settings-hint"><strong style="color:#818cf8">Left pinch</strong> → frequency</p>
+            <p class="settings-hint"><strong style="color:#34d399">Right pinch</strong> → amplitude</p>
+            <p class="settings-hint"><strong style="color:#818cf8">Left X</strong> → phase</p>
+            <p class="settings-hint"><strong style="color:#34d399">Right X</strong> → color</p>
+          </div>
+          <div id="pinch-sub-lissajous" class="submenu pinch-submenu hidden">
+            <h4>Controls</h4>
+            <p class="settings-hint"><strong style="color:#818cf8">Left pinch</strong> → X frequency</p>
+            <p class="settings-hint"><strong style="color:#34d399">Right pinch</strong> → Y frequency</p>
+            <p class="settings-hint"><strong style="color:#818cf8">Left X</strong> → X phase</p>
+            <p class="settings-hint"><strong style="color:#34d399">Right X</strong> → Y phase</p>
+          </div>
+          <div id="pinch-sub-mirror" class="submenu pinch-submenu hidden">
+            <h4>Controls</h4>
+            <p class="settings-hint"><strong style="color:#818cf8">Left hand X</strong> → vertical split</p>
+            <p class="settings-hint"><strong style="color:#34d399">Right hand Y</strong> → horizontal split</p>
+            <p class="settings-hint">Each hand activates its own axis independently.</p>
           </div>
         </div>
       </aside>

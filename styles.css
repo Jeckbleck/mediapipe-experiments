@@ -744,11 +744,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /*
+   * The centre column is `1fr` in .app-layout. Grid/flex items default to
+   * min-width: auto, which lets intrinsic content (e.g. a growing carousel)
+   * widen the column and break the 3-col layout. Force it to 0 so scrollable
+   * children overflow instead of expanding the track.
+   */
+  min-width: 0;
 }
 
 .app-main .video-container {
-  max-width: 100%;
+  max-width: 640px;
   width: 100%;
+  min-width: 0;
 }
 
 /* Settings panels */
@@ -761,6 +769,117 @@ body {
   color: var(--text-muted);
   line-height: 1.5;
   margin-bottom: 0.75rem;
+}
+
+/* Frame capture carousel */
+.frame-carousel-wrap {
+  width: 100%;
+  max-width: 640px;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-top: 0.75rem;
+  background: var(--surface);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  overflow: hidden;
+}
+
+.frame-carousel {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99,102,241,0.4) transparent;
+}
+
+.frame-carousel::-webkit-scrollbar {
+  height: 4px;
+}
+.frame-carousel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.frame-carousel::-webkit-scrollbar-thumb {
+  background: rgba(99,102,241,0.4);
+  border-radius: 2px;
+}
+
+.frame-carousel-item {
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid rgba(99,102,241,0.2);
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.frame-carousel-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.frame-carousel-item img {
+  height: 72px;
+  width: auto;
+  display: block;
+}
+
+.frame-carousel-time {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.65);
+  font-size: 0.65rem;
+  font-family: monospace;
+  color: #e4e4e7;
+  text-align: center;
+  padding: 2px 0;
+  pointer-events: none;
+}
+
+/* Frame capture save-dir row */
+.frame-dir-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  min-width: 0;
+}
+
+.frame-dir-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Frame capture phase list */
+.frame-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.frame-phase {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.frame-phase-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
 }
 
 /* Responsive */

@@ -15,6 +15,8 @@ const featureLoaders = {
   "face-swap-multi": () => import("./features/faceSwapMulti.js"),
   segmentation: () => import("./features/segmentation.js"),
   emotion: () => import("./features/emotion.js"),
+  "pinch-controller": () => import("./features/pinchController.js"),
+  "frame-capture": () => import("./features/frameCapture.js"),
 };
 
 const moduleCache = {};
