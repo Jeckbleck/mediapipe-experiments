@@ -18,6 +18,7 @@ const featureLoaders = {
   "pinch-controller": () => import("./features/pinchController.js"),
   "frame-capture": () => import("./features/frameCapture.js"),
   "hand-eq": () => import("./features/handEQ.js"),
+  "custom-signs": () => import("./features/customSigns.js"),
 };
 
 const moduleCache = {};

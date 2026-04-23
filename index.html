@@ -58,6 +58,10 @@
             <input type="radio" name="feature" value="hand-eq">
             <span class="feature-label"><span class="feature-icon"></span> Hand EQ</span>
           </label>
+          <label class="feature-option">
+            <input type="radio" name="feature" value="custom-signs">
+            <span class="feature-label"><span class="feature-icon"></span> Signs</span>
+          </label>
         </div>
       </aside>
 
@@ -243,6 +247,18 @@
           </div>
           <button type="button" id="frame-reset-btn" class="btn-secondary" style="width:100%;margin-top:0.75rem;text-align:center">Reset frame</button>
           <p class="settings-hint" style="margin-top:0.5rem">Auto-resets 3 s after hands leave view. Move hands to reposition the frame while frozen.</p>
+        </div>
+
+        <!-- Custom Signs -->
+        <div class="feature-settings hidden" data-feature="custom-signs">
+          <h3 class="panel-title">Custom Signs</h3>
+          <p class="settings-hint">Record up to 5 two-hand signs. Each sign can have its own background image swapped in via segmentation when detected.</p>
+          <div class="sign-sensitivity-row">
+            <span style="font-size:0.82rem;white-space:nowrap">Sensitivity</span>
+            <input type="range" id="sign-sensitivity" min="0.5" max="3.0" step="0.1" value="1.4" class="seg-slider">
+            <span id="sign-sensitivity-val" class="slider-value">1.4</span>
+          </div>
+          <div id="sign-slots"></div>
         </div>
 
         <!-- Hand EQ -->
