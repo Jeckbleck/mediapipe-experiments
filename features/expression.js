@@ -1,5 +1,6 @@
 import { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
+import { drawTimer } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -32,6 +33,7 @@ let faceLandmarker = null;
 let animationId = null;
 let lastVideoTime = -1;
 let shared = null;
+let lastDetectionMs = 0;
 
 function onVideoCanvasResize() {
   lastVideoTime = -1;
@@ -101,19 +103,27 @@ function detect() {
     return;
   }
 
+  const { video, canvas, ctx, overlay } = shared;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(video, 0, 0, w, h);
+
   const now = performance.now();
-  if (lastVideoTime !== shared.video.currentTime) {
-    lastVideoTime = shared.video.currentTime;
-    const results = faceLandmarker.detectForVideo(shared.video, now);
+  if (lastVideoTime !== video.currentTime) {
+    lastVideoTime = video.currentTime;
+    const t0 = performance.now();
+    const results = faceLandmarker.detectForVideo(video, now);
+    lastDetectionMs = performance.now() - t0;
 
     if (results.faceLandmarks?.length > 0 && results.faceBlendshapes?.length > 0) {
-      shared.overlay.textContent = getExpressionFromBlendshapes(
-        results.faceBlendshapes[0].categories
-      );
+      overlay.textContent = getExpressionFromBlendshapes(results.faceBlendshapes[0].categories);
     } else {
-      shared.overlay.textContent = "No face detected";
+      overlay.textContent = "No face detected";
     }
   }
 
+  drawTimer(ctx, lastDetectionMs, w, h);
   animationId = requestAnimationFrame(detect);
 }

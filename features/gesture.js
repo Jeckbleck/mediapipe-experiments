@@ -1,5 +1,6 @@
 import { GestureRecognizer } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
+import { drawTimer } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
@@ -19,6 +20,7 @@ let gestureRecognizer = null;
 let animationId = null;
 let lastVideoTime = -1;
 let shared = null;
+let lastDetectionMs = 0;
 
 function onVideoCanvasResize() {
   lastVideoTime = -1;
@@ -60,18 +62,28 @@ function detect() {
     return;
   }
 
+  const { video, canvas, ctx, overlay } = shared;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(video, 0, 0, w, h);
+
   const now = performance.now();
-  if (lastVideoTime !== shared.video.currentTime) {
-    lastVideoTime = shared.video.currentTime;
-    const results = gestureRecognizer.recognizeForVideo(shared.video, now);
+  if (lastVideoTime !== video.currentTime) {
+    lastVideoTime = video.currentTime;
+    const t0 = performance.now();
+    const results = gestureRecognizer.recognizeForVideo(video, now);
+    lastDetectionMs = performance.now() - t0;
 
     if (results.gestures?.length > 0 && results.gestures[0].length > 0) {
       const name = results.gestures[0][0].categoryName;
-      shared.overlay.textContent = GESTURE_LABELS[name] ?? name;
+      overlay.textContent = GESTURE_LABELS[name] ?? name;
     } else {
-      shared.overlay.textContent = "—";
+      overlay.textContent = "—";
     }
   }
 
+  drawTimer(ctx, lastDetectionMs, w, h);
   animationId = requestAnimationFrame(detect);
 }

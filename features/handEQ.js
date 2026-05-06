@@ -1,6 +1,7 @@
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
 import { lerp } from "../lib/math.js";
+import { drawTimer } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
@@ -19,6 +20,7 @@ let shared = null;
 let animationId = null;
 let lastVideoTime = -1;
 let uiSetup = false;
+let lastDetectionMs = 0;
 
 // Audio state
 let audioCtx = null;
@@ -306,7 +308,9 @@ function detect() {
   let results = null;
   if (lastVideoTime !== shared.video.currentTime) {
     lastVideoTime = shared.video.currentTime;
+    const t0 = performance.now();
     results = handLandmarker.detectForVideo(shared.video, now);
+    lastDetectionMs = performance.now() - t0;
     extractGains(results);
   }
 
@@ -317,6 +321,7 @@ function detect() {
   ctx.drawImage(video, 0, 0, w, h);
   if (results) drawHandDots(ctx, results, w, h);
   drawEQPanel(ctx, w, h);
+  drawTimer(ctx, lastDetectionMs, w, h);
 
   if (!audioCtx) {
     ctx.save();

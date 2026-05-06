@@ -3,9 +3,6 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const overlay = document.getElementById("overlay");
 const statusEl = document.getElementById("status");
-const posePrompt = document.getElementById("pose-prompt");
-const photoStripPreview = document.getElementById("photo-strip-preview");
-const photoStripCanvases = document.getElementById("photo-strip-canvases");
 
 const featureLoaders = {
   expression: () => import("./features/expression.js"),
@@ -74,10 +71,6 @@ async function switchFeature(name) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   overlay.textContent = "";
   overlay.classList.add("hidden");
-  posePrompt.textContent = "";
-  posePrompt.classList.add("hidden");
-  photoStripPreview.classList.add("hidden");
-
   document.querySelectorAll(".feature-settings").forEach((el) => el.classList.add("hidden"));
   const settingsEl = document.querySelector(`.feature-settings[data-feature="${name}"]`);
   if (settingsEl) settingsEl.classList.remove("hidden");
@@ -100,9 +93,6 @@ async function switchFeature(name) {
       ctx,
       overlay,
       statusEl,
-      posePrompt,
-      photoStripPreview,
-      photoStripCanvases,
     });
   } catch (err) {
     statusEl.textContent = `Error: ${err.message}`;

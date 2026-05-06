@@ -1,5 +1,6 @@
 import { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
+import { drawTimer } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -256,7 +257,9 @@ function detect() {
 
   if (lastVideoTime !== video.currentTime) {
     lastVideoTime = video.currentTime;
+    const t0 = performance.now();
     const results = faceLandmarker.detectForVideo(video, now);
+    const detectionMs = performance.now() - t0;
 
     ctx.drawImage(video, 0, 0);
 
@@ -273,6 +276,7 @@ function detect() {
     } else {
       overlay.textContent = "No face detected";
     }
+    drawTimer(ctx, detectionMs, canvas.width, canvas.height);
   }
 
   animationId = requestAnimationFrame(detect);

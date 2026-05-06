@@ -1,5 +1,6 @@
 import { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
+import { drawTimer } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -137,9 +138,6 @@ let currentMode = "landmarks";
 let currentProp = "glasses";
 let currentTrigger = "smile";
 let capturedPhotos = [];
-let photoStripActive = false;
-let photoStripStep = 0;
-const PHOTO_STRIP_PROMPTS = ["Neutral", "Smile!", "Silly face!", "Wink!"];
 
 export async function activate(s) {
   shared = s;
@@ -171,7 +169,6 @@ export async function activate(s) {
 export function deactivate() {
   if (animationId) cancelAnimationFrame(animationId);
   animationId = null;
-  photoStripActive = false;
   const v = shared?.video;
   if (v) v.removeEventListener("videocanvasresize", onVideoCanvasResize);
   shared = null;
@@ -197,8 +194,6 @@ function setupUI() {
     });
   });
   document.querySelector(".trigger-btn[data-trigger='smile']")?.classList.add("selected");
-  document.getElementById("btn-download-strip")?.addEventListener("click", downloadPhotoStrip);
-  document.getElementById("btn-start-strip")?.addEventListener("click", startPhotoStrip);
 }
 
 function isShowLandmarksEnabled() {
@@ -216,14 +211,6 @@ function setMode(mode) {
   const sub = document.getElementById(`submenu-${mode.replace(" ", "-")}`);
   if (sub) sub.classList.remove("hidden");
 
-  if (shared) {
-    if (mode === "photo-strip") {
-      shared.photoStripPreview?.classList.remove("hidden");
-    } else {
-      shared.photoStripPreview?.classList.add("hidden");
-      photoStripActive = false;
-    }
-  }
 }
 
 /**
@@ -363,24 +350,6 @@ function detectSurprise(landmarks) {
   return mouthOpen > 25 && (lm.y + rm.y) / 2 > ul.y + 5;
 }
 
-function getExpression(landmarks) {
-  if (detectSmile(landmarks)) return "Smile";
-  if (detectWink(landmarks)) return "Wink";
-  if (detectSurprise(landmarks)) return "Surprise";
-  return "Neutral";
-}
-
-function getHeadPose(landmarks) {
-  const lf = getKp(landmarks, L.leftFace);
-  const rf = getKp(landmarks, L.rightFace);
-  const n = getKp(landmarks, L.noseTip);
-  if (!lf || !rf || !n) return "center";
-  const diff = n.x - (lf.x + rf.x) / 2;
-  if (diff < -15) return "left";
-  if (diff > 15) return "right";
-  return "center";
-}
-
 let lastCaptureTime = 0;
 const CAPTURE_COOLDOWN = 1500;
 
@@ -401,31 +370,6 @@ function checkSmartCapture(landmarks) {
   }
 }
 
-function applyExpressionFilter(expression) {
-  const filters = {
-    Smile: "sepia(0.3) saturate(1.2)",
-    Wink: "hue-rotate(20deg)",
-    Surprise: "contrast(1.1) saturate(1.3)",
-    Neutral: "none",
-  };
-  return filters[expression] || "none";
-}
-
-function apply3DEffect(ctx, canvas, landmarks) {
-  const n = getKp(landmarks, L.noseTip);
-  const lf = getKp(landmarks, L.leftFace);
-  const rf = getKp(landmarks, L.rightFace);
-  if (!n || !lf || !rf) return;
-  const tilt = (n.x - (lf.x + rf.x) / 2) / 50;
-  const lm = landmarks[L.noseTip];
-  const vignette = Math.max(0.3, 1 - Math.abs(lm?.z ?? 0) / 200);
-  ctx.save();
-  ctx.globalAlpha = vignette;
-  ctx.fillStyle = `rgba(0,0,0,${0.4 - Math.abs(tilt) * 0.2})`;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.restore();
-}
-
 function capturePhoto() {
   if (!shared) return;
   const c = document.createElement("canvas");
@@ -436,68 +380,6 @@ function capturePhoto() {
   capturedPhotos.push(c);
 }
 
-function startPhotoStrip() {
-  photoStripActive = true;
-  photoStripStep = 0;
-  capturedPhotos = [];
-  if (shared?.photoStripCanvases) shared.photoStripCanvases.innerHTML = "";
-}
-
-let photoStripCooldown = 0;
-function updatePhotoStrip(landmarks) {
-  if (!photoStripActive || !landmarks || !shared) return;
-  const now = Date.now();
-  if (now < photoStripCooldown) return;
-  const prompt = PHOTO_STRIP_PROMPTS[photoStripStep];
-  shared.posePrompt.textContent = prompt;
-  shared.posePrompt.classList.remove("hidden");
-  let ready = false;
-  if (photoStripStep === 0) ready = getExpression(landmarks) === "Neutral";
-  if (photoStripStep === 1) ready = detectSmile(landmarks);
-  if (photoStripStep === 2) ready = detectSurprise(landmarks);
-  if (photoStripStep === 3) ready = detectWink(landmarks);
-  if (ready) {
-    capturePhoto();
-    photoStripStep++;
-    photoStripCooldown = now + 800;
-    if (photoStripStep >= PHOTO_STRIP_PROMPTS.length) {
-      photoStripActive = false;
-      shared.posePrompt.textContent = "Done!";
-      renderPhotoStrip();
-    }
-  }
-}
-
-function renderPhotoStrip() {
-  if (!shared?.photoStripCanvases) return;
-  shared.photoStripCanvases.innerHTML = "";
-  capturedPhotos.forEach((c) => {
-    const thumb = document.createElement("canvas");
-    thumb.width = 120;
-    thumb.height = 90;
-    thumb.getContext("2d").drawImage(c, 0, 0, 120, 90);
-    shared.photoStripCanvases.appendChild(thumb);
-  });
-}
-
-function downloadPhotoStrip() {
-  if (capturedPhotos.length === 0) return;
-  const stripW = 120 * capturedPhotos.length + 20;
-  const strip = document.createElement("canvas");
-  strip.width = stripW;
-  strip.height = 110;
-  const sctx = strip.getContext("2d");
-  sctx.fillStyle = "#fff";
-  sctx.fillRect(0, 0, stripW, 110);
-  capturedPhotos.forEach((c, i) => {
-    sctx.drawImage(c, 0, 0, c.width, c.height, 10 + i * 120, 10, 120, 90);
-  });
-  const a = document.createElement("a");
-  a.download = "photobooth-strip.png";
-  a.href = strip.toDataURL("image/png");
-  a.click();
-}
-
 function detect() {
   if (!shared) return;
   if (!faceLandmarker || shared.video.readyState < 2 || shared.video.videoWidth === 0) {
@@ -505,14 +387,16 @@ function detect() {
     return;
   }
 
-  const { video, canvas, ctx, overlay, posePrompt } = shared;
+  const { video, canvas, ctx, overlay } = shared;
   const w = canvas.width;
   const h = canvas.height;
 
   const now = performance.now();
   if (lastVideoTime !== video.currentTime) {
     lastVideoTime = video.currentTime;
+    const t0 = performance.now();
     const results = faceLandmarker.detectForVideo(video, now);
+    const detectionMs = performance.now() - t0;
 
     ctx.clearRect(0, 0, w, h);
     ctx.save();
@@ -542,35 +426,6 @@ function detect() {
           overlay.textContent = `Trigger: ${currentTrigger}`;
           if (showLandmarks) drawLandmarksVisualization(ctx, landmarks, w, h);
           break;
-        case "expression": {
-          const expr = getExpression(landmarks);
-          overlay.textContent = expr;
-          ctx.filter = applyExpressionFilter(expr);
-          ctx.translate(w, 0);
-          ctx.scale(-1, 1);
-          ctx.drawImage(video, 0, 0, w, h);
-          ctx.filter = "none";
-          if (showLandmarks) drawLandmarksVisualization(ctx, landmarks, w, h);
-          break;
-        }
-        case "pose-guidance": {
-          const pose = getHeadPose(landmarks);
-          const prompts = { left: "Look left", right: "Look right", center: "Center" };
-          posePrompt.textContent = prompts[pose];
-          posePrompt.classList.remove("hidden");
-          overlay.textContent = pose === "center" ? "Good!" : prompts[pose];
-          if (showLandmarks) drawLandmarksVisualization(ctx, landmarks, w, h);
-          break;
-        }
-        case "photo-strip":
-          updatePhotoStrip(landmarks);
-          if (showLandmarks) drawLandmarksVisualization(ctx, landmarks, w, h);
-          break;
-        case "3d-effects":
-          apply3DEffect(ctx, canvas, landmarks);
-          overlay.textContent = "3D lighting";
-          if (showLandmarks) drawLandmarksVisualization(ctx, landmarks, w, h);
-          break;
         default:
           drawLandmarksVisualization(ctx, landmarks, w, h);
       }
@@ -579,6 +434,7 @@ function detect() {
       overlay.textContent = "No face";
       posePrompt.classList.add("hidden");
     }
+    drawTimer(ctx, detectionMs, w, h);
   }
 
   animationId = requestAnimationFrame(detect);

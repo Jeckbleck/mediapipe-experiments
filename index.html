@@ -71,17 +71,11 @@
           <video id="video" autoplay playsinline muted></video>
           <canvas id="canvas"></canvas>
           <div id="overlay" class="overlay-text hidden"></div>
-          <div id="pose-prompt" class="pose-prompt hidden"></div>
         </div>
         <div id="frame-carousel-wrap" class="frame-carousel-wrap hidden">
           <div id="frame-carousel" class="frame-carousel"></div>
         </div>
 
-        <div id="photo-strip-preview" class="photo-strip-preview hidden">
-          <h4>Your Photo Strip</h4>
-          <div id="photo-strip-canvases" class="photo-strip-canvases"></div>
-          <button type="button" id="btn-download-strip" class="btn-secondary">Download strip</button>
-        </div>
       </main>
 
       <!-- Right: Feature settings -->
@@ -113,10 +107,6 @@
             <button type="button" class="mode-btn active" data-mode="landmarks">Landmarks</button>
             <button type="button" class="mode-btn" data-mode="ar-props">AR Props</button>
             <button type="button" class="mode-btn" data-mode="smart-capture">Smart Capture</button>
-            <button type="button" class="mode-btn" data-mode="expression">Expression</button>
-            <button type="button" class="mode-btn" data-mode="pose-guidance">Pose Guidance</button>
-            <button type="button" class="mode-btn" data-mode="photo-strip">Photo Strip</button>
-            <button type="button" class="mode-btn" data-mode="3d-effects">3D Effects</button>
           </div>
           <div id="submenu-ar-props" class="submenu hidden">
             <h4>Select prop</h4>
@@ -137,11 +127,6 @@
               <button type="button" class="trigger-btn" data-trigger="surprise">Surprise</button>
             </div>
             <p class="submenu-hint">Photo captures when you do the action</p>
-          </div>
-          <div id="submenu-photo-strip" class="submenu hidden">
-            <h4>Photo Strip</h4>
-            <p class="submenu-hint">Follow the prompts for each shot</p>
-            <button type="button" id="btn-start-strip" class="btn-primary">Start strip</button>
           </div>
           <div class="landmarks-toggle">
             <label class="toggle-label">

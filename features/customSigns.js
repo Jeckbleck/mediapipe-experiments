@@ -2,6 +2,7 @@ import { HandLandmarker, ImageSegmenter } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
 import { dist2D } from "../lib/math.js";
 import { createPersonCutout } from "../lib/segMask.js";
+import { drawTimer } from "../lib/detectionTimer.js";
 
 const HAND_MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 const SEG_MODEL  = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
@@ -20,6 +21,7 @@ let shared         = null;
 let animId         = null;
 let lastVideoTime  = -1;
 let uiSetup        = false;
+let lastDetectionMs = 0;
 
 // signs[i]: { name: string, vector: number[] } | null
 let signs      = Array(MAX_SIGNS).fill(null);
@@ -441,7 +443,9 @@ function detect() {
     lastVideoTime = video.currentTime;
     const now = performance.now();
 
+    const t0 = performance.now();
     const handRes = handLandmarker.detectForVideo(video, now);
+    lastDetectionMs = performance.now() - t0;
     const { L, R } = getHands(handRes);
     lastL = L; lastR = R;
 
@@ -458,6 +462,7 @@ function detect() {
   drawHandDots(ctx, lastL, lastR, w, h);
   drawDetectionOverlay(ctx, w, h);
   drawRecordOverlay(ctx, w, h);
+  drawTimer(ctx, lastDetectionMs, w, h);
 
   animId = requestAnimationFrame(detect);
 }
