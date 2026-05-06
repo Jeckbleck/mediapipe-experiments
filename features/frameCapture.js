@@ -1,6 +1,7 @@
-import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import { HandLandmarker } from "@mediapipe/tasks-vision";
+import { getFileset } from "../lib/vision.js";
+import { dist2D } from "../lib/math.js";
 
-const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
@@ -63,7 +64,7 @@ export async function activate(s) {
 
   if (!handLandmarker) {
     shared.statusEl.textContent = "Loading hand model…";
-    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+    const vision = await getFileset();
     handLandmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_PATH, delegate: "GPU" },
       runningMode: "VIDEO",
@@ -213,10 +214,6 @@ async function saveToDirectory(dataUrl, timestamp) {
 
 // ─── Geometry ─────────────────────────────────────────────────────────────────
 
-function dist(ax, ay, bx, by) {
-  return Math.sqrt((bx - ax) ** 2 + (by - ay) ** 2);
-}
-
 function sortCorners(pts) {
   const s  = [...pts].sort((a, b) => a.y - b.y);
   const tl = s[0].x <= s[1].x ? s[0] : s[1];
@@ -237,10 +234,10 @@ function quadArea({ tl, tr, bl, br }) {
 
 function maxCornerDelta(a, b) {
   return Math.max(
-    dist(a.tl.x, a.tl.y, b.tl.x, b.tl.y),
-    dist(a.tr.x, a.tr.y, b.tr.x, b.tr.y),
-    dist(a.bl.x, a.bl.y, b.bl.x, b.bl.y),
-    dist(a.br.x, a.br.y, b.br.x, b.br.y)
+    dist2D(a.tl.x, a.tl.y, b.tl.x, b.tl.y),
+    dist2D(a.tr.x, a.tr.y, b.tr.x, b.tr.y),
+    dist2D(a.bl.x, a.bl.y, b.bl.x, b.bl.y),
+    dist2D(a.br.x, a.br.y, b.br.x, b.br.y)
   );
 }
 

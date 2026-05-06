@@ -1,6 +1,8 @@
-import { HandLandmarker, ImageSegmenter, FilesetResolver } from "@mediapipe/tasks-vision";
+import { HandLandmarker, ImageSegmenter } from "@mediapipe/tasks-vision";
+import { getFileset } from "../lib/vision.js";
+import { dist2D } from "../lib/math.js";
+import { createPersonCutout } from "../lib/segMask.js";
 
-const WASM_PATH  = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const HAND_MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 const SEG_MODEL  = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 
@@ -9,6 +11,8 @@ const MAX_SIGNS = 5;
 const SAMPLE_N  = 6;
 const COUNTDOWN = 3000;
 const LS_KEY    = "customSigns_v1";
+
+const cutoutPerson = createPersonCutout(BG_CAT);
 
 let handLandmarker = null;
 let segmenter      = null;
@@ -36,15 +40,7 @@ let recSamples = [];
 let lastL = null;
 let lastR = null;
 
-// Segmentation offscreen canvases
-const maskCanvas   = document.createElement("canvas");
-const maskCtx      = maskCanvas.getContext("2d", { willReadFrequently: true });
-const smoothCanvas = document.createElement("canvas");
-const smoothCtx    = smoothCanvas.getContext("2d");
-const personCanvas = document.createElement("canvas");
-const personCtx    = personCanvas.getContext("2d");
-let maskImageData  = null;
-let pendingSeg     = null;
+let pendingSeg = null;
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
@@ -79,15 +75,11 @@ function saveStorage() {
 // This makes the vector invariant to position, rotation, and camera distance
 // while preserving the relative geometry between the hands (incl. when touching).
 
-function dist2D(a, b) {
-  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
-}
-
 function buildVector(L, R) {
   const lw = L[0], rw = R[0];
   const ox = (lw.x + rw.x) / 2;
   const oy = (lw.y + rw.y) / 2;
-  const sc = dist2D(lw, rw);
+  const sc = dist2D(lw.x, lw.y, rw.x, rw.y);
   if (sc < 0.02) return null;
   return [...L, ...R].flatMap(p => [(p.x - ox) / sc, (p.y - oy) / sc]);
 }
@@ -95,7 +87,7 @@ function buildVector(L, R) {
 function buildVectorSingle(lm) {
   const wrist  = lm[0];
   const midMCP = lm[9]; // middle-finger knuckle — stable scale reference
-  const sc = dist2D(wrist, midMCP);
+  const sc = dist2D(wrist.x, wrist.y, midMCP.x, midMCP.y);
   if (sc < 0.01) return null;
   return lm.flatMap(p => [(p.x - wrist.x) / sc, (p.y - wrist.y) / sc]);
 }
@@ -323,49 +315,9 @@ function applyBg(ctx, video, segResult, w, h) {
     return;
   }
 
-  const mask = segResult.categoryMask;
-  const mw = mask.width, mh = mask.height;
-  const data = mask.getAsUint8Array();
-
-  if (maskCanvas.width !== mw || maskCanvas.height !== mh) {
-    maskCanvas.width  = mw;
-    maskCanvas.height = mh;
-    maskImageData = null;
-  }
-  if (!maskImageData) maskImageData = maskCtx.createImageData(mw, mh);
-
-  const px = maskImageData.data;
-  for (let i = 0; i < data.length; i++) {
-    const j = i * 4;
-    px[j] = px[j + 1] = px[j + 2] = 255;
-    px[j + 3] = data[i] !== BG_CAT ? 255 : 0;
-  }
-  maskCtx.putImageData(maskImageData, 0, 0);
-
-  if (smoothCanvas.width !== mw || smoothCanvas.height !== mh) {
-    smoothCanvas.width = mw;
-    smoothCanvas.height = mh;
-  }
-  smoothCtx.clearRect(0, 0, mw, mh);
-  smoothCtx.filter = "blur(2px)";
-  smoothCtx.drawImage(maskCanvas, 0, 0);
-  smoothCtx.filter = "none";
-
-  if (personCanvas.width !== w || personCanvas.height !== h) {
-    personCanvas.width = w;
-    personCanvas.height = h;
-  }
-  personCtx.clearRect(0, 0, w, h);
-  personCtx.drawImage(video, 0, 0, w, h);
-  personCtx.globalCompositeOperation = "destination-in";
-  const sc = Math.min(mw / w, mh / h);
-  const sw = Math.round(w * sc), sh = Math.round(h * sc);
-  const ox = Math.round((mw - sw) / 2), oy = Math.round((mh - sh) / 2);
-  personCtx.drawImage(smoothCanvas, ox, oy, sw, sh, 0, 0, w, h);
-  personCtx.globalCompositeOperation = "source-over";
-
+  const personLayer = cutoutPerson(video, segResult.categoryMask, w, h);
   ctx.drawImage(bgImg, 0, 0, w, h);
-  ctx.drawImage(personCanvas, 0, 0, w, h);
+  ctx.drawImage(personLayer, 0, 0, w, h);
 }
 
 // ─── Canvas overlays ──────────────────────────────────────────────────────────
@@ -445,7 +397,7 @@ export async function activate(s) {
 
   if (!handLandmarker || !segmenter) {
     shared.statusEl.textContent = "Loading models…";
-    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+    const vision = await getFileset();
     if (!handLandmarker) {
       handLandmarker = await HandLandmarker.createFromOptions(vision, {
         baseOptions: { modelAssetPath: HAND_MODEL, delegate: "GPU" },

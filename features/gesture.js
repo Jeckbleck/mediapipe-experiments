@@ -1,6 +1,6 @@
-import { GestureRecognizer, FilesetResolver } from "@mediapipe/tasks-vision";
+import { GestureRecognizer } from "@mediapipe/tasks-vision";
+import { getFileset } from "../lib/vision.js";
 
-const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
 
@@ -30,7 +30,7 @@ export async function activate(s) {
 
   if (!gestureRecognizer) {
     shared.statusEl.textContent = "Loading gesture model...";
-    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+    const vision = await getFileset();
     gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_PATH },
       runningMode: "VIDEO",

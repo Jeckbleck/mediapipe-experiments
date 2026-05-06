@@ -1,6 +1,6 @@
-import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import { FaceLandmarker } from "@mediapipe/tasks-vision";
+import { getFileset } from "../lib/vision.js";
 
-const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
@@ -43,7 +43,7 @@ export async function activate(s) {
 
   if (!faceLandmarker) {
     shared.statusEl.textContent = "Loading expression model...";
-    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+    const vision = await getFileset();
     faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_PATH },
       outputFaceBlendshapes: true,

@@ -1,6 +1,7 @@
-import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import { HandLandmarker } from "@mediapipe/tasks-vision";
+import { getFileset } from "../lib/vision.js";
+import { lerp } from "../lib/math.js";
 
-const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
@@ -30,8 +31,6 @@ const gains = new Array(10).fill(0);
 // Smoothed gains for display
 const smoothGains = new Array(10).fill(0);
 
-function lerp(a, b, t) { return a + (b - a) * t; }
-
 function onVideoCanvasResize() {
   lastVideoTime = -1;
 }
@@ -42,7 +41,7 @@ export async function activate(s) {
 
   if (!handLandmarker) {
     shared.statusEl.textContent = "Loading hand model...";
-    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+    const vision = await getFileset();
     handLandmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_PATH, delegate: "GPU" },
       runningMode: "VIDEO",

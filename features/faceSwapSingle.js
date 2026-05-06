@@ -1,7 +1,7 @@
-import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import { FaceLandmarker } from "@mediapipe/tasks-vision";
+import { getFileset } from "../lib/vision.js";
 import { warpReferenceFaceOntoTarget } from "../lib/faceSwap.js";
 
-const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
@@ -34,7 +34,7 @@ export async function activate(s) {
 
   if (!faceLandmarkerVideo) {
     shared.statusEl.textContent = "Loading face swap model...";
-    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+    const vision = await getFileset();
     faceLandmarkerVideo = await FaceLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: MODEL_PATH },
       runningMode: "VIDEO",

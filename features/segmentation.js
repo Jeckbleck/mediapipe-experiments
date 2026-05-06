@@ -1,6 +1,7 @@
-import { ImageSegmenter, FilesetResolver } from "@mediapipe/tasks-vision";
+import { ImageSegmenter } from "@mediapipe/tasks-vision";
+import { getFileset } from "../lib/vision.js";
+import { createPersonCutout } from "../lib/segMask.js";
 
-const WASM_PATH = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 
@@ -12,6 +13,7 @@ const BACKGROUNDS = [
 ];
 
 const BACKGROUND_CATEGORY = 0;
+const cutoutPerson = createPersonCutout(BACKGROUND_CATEGORY);
 
 let segmenter = null;
 let shared = null;
@@ -25,40 +27,25 @@ let bgColor = "#000000";
 let bgImage = null;
 let smoothEdges = true;
 
-const maskCanvas = document.createElement("canvas");
-const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
-// Separate canvas for edge-softened mask, operated at mask resolution (256×256)
-const smoothedMaskCanvas = document.createElement("canvas");
-const smoothedMaskCtx = smoothedMaskCanvas.getContext("2d");
-const personCanvas = document.createElement("canvas");
-const personCtx = personCanvas.getContext("2d");
-// Small intermediate canvas for the downscale-upscale blur trick
+// Separate canvas for the downscale-upscale blur trick on the background
 const blurCanvas = document.createElement("canvas");
 const blurCtx = blurCanvas.getContext("2d");
-let maskImageData = null;
 
 function onVideoCanvasResize() {
   lastVideoTime = -1;
-  if (shared) {
-    personCanvas.width = shared.canvas.width;
-    personCanvas.height = shared.canvas.height;
-  }
 }
 
 export async function activate(s) {
   shared = s;
   s.video.addEventListener("videocanvasresize", onVideoCanvasResize);
 
-  personCanvas.width = shared.canvas.width;
-  personCanvas.height = shared.canvas.height;
-
   if (!segmenter) {
     shared.statusEl.textContent = "Loading segmentation model...";
-    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+    const vision = await getFileset();
     segmenter = await ImageSegmenter.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath: MODEL_PATH,
-        delegate: "GPU", // moves inference from WASM/CPU to WebGL
+        delegate: "GPU",
       },
       runningMode: "VIDEO",
       outputCategoryMask: true,
@@ -151,56 +138,6 @@ function loadBgImage(url) {
   img.src = url;
 }
 
-function computeLetterbox(maskW, maskH, videoW, videoH) {
-  const scale = Math.min(maskW / videoW, maskH / videoH);
-  const scaledW = Math.round(videoW * scale);
-  const scaledH = Math.round(videoH * scale);
-  return {
-    offsetX: Math.round((maskW - scaledW) / 2),
-    offsetY: Math.round((maskH - scaledH) / 2),
-    scaledW,
-    scaledH,
-  };
-}
-
-function updateMaskCanvas(mask) {
-  const mw = mask.width;
-  const mh = mask.height;
-
-  if (maskCanvas.width !== mw || maskCanvas.height !== mh) {
-    maskCanvas.width = mw;
-    maskCanvas.height = mh;
-    maskImageData = maskCtx.createImageData(mw, mh);
-  }
-
-  const maskData = mask.getAsUint8Array();
-  const data = maskImageData.data;
-  const len = mw * mh;
-
-  for (let i = 0; i < len; i++) {
-    const j = i * 4;
-    const isPerson = maskData[i] !== BACKGROUND_CATEGORY;
-    data[j] = 255;
-    data[j + 1] = 255;
-    data[j + 2] = 255;
-    data[j + 3] = isPerson ? 255 : 0;
-  }
-  maskCtx.putImageData(maskImageData, 0, 0);
-
-  // Soften edges at mask resolution (256×256) rather than full canvas size.
-  // Same visual result but ~14× cheaper: 65k pixels instead of ~921k at 720p.
-  if (smoothEdges) {
-    if (smoothedMaskCanvas.width !== mw || smoothedMaskCanvas.height !== mh) {
-      smoothedMaskCanvas.width = mw;
-      smoothedMaskCanvas.height = mh;
-    }
-    smoothedMaskCtx.clearRect(0, 0, mw, mh);
-    smoothedMaskCtx.filter = "blur(2px)";
-    smoothedMaskCtx.drawImage(maskCanvas, 0, 0);
-    smoothedMaskCtx.filter = "none";
-  }
-}
-
 function applySegmentation(mask) {
   if (!shared) return;
   const { video, canvas, ctx } = shared;
@@ -212,26 +149,11 @@ function applySegmentation(mask) {
     return;
   }
 
-  updateMaskCanvas(mask);
-
-  const activeMask = smoothEdges ? smoothedMaskCanvas : maskCanvas;
-  const { offsetX, offsetY, scaledW, scaledH } =
-    computeLetterbox(activeMask.width, activeMask.height, w, h);
-
-  personCtx.save();
-  personCtx.clearRect(0, 0, w, h);
-  personCtx.drawImage(video, 0, 0);
-  personCtx.globalCompositeOperation = "destination-in";
-  // No ctx.filter here — edge softening is already baked into activeMask
-  personCtx.drawImage(activeMask, offsetX, offsetY, scaledW, scaledH, 0, 0, w, h);
-  personCtx.globalCompositeOperation = "source-over";
-  personCtx.restore();
+  const personLayer = cutoutPerson(video, mask, w, h, smoothEdges);
 
   switch (currentMode) {
     case "blur": {
-      // Downscale-upscale trick: render video into a tiny canvas then stretch it
-      // back. The GPU's bilinear interpolation produces the blur effect without
-      // any CPU-side convolution. Visually equivalent to a strong Gaussian blur.
+      // Downscale-upscale trick: GPU bilinear interpolation produces blur without CPU convolution
       const scale = Math.max(4, blurAmount * 1.5);
       const bw = Math.max(2, Math.round(w / scale));
       const bh = Math.max(2, Math.round(h / scale));
@@ -263,7 +185,7 @@ function applySegmentation(mask) {
       break;
   }
 
-  ctx.drawImage(personCanvas, 0, 0);
+  ctx.drawImage(personLayer, 0, 0);
 }
 
 function detect() {
