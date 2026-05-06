@@ -1,7 +1,7 @@
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
 import { lerp } from "../lib/math.js";
-import { drawTimer } from "../lib/detectionTimer.js";
+import { createPerfMonitor } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
@@ -14,6 +14,8 @@ const LERP = 0.12;
 // Right hand (MediaPipe "Left") → bands 5-9: thumb→pinky (mid-high to high)
 const LEFT_TIPS  = [20, 16, 12, 8, 4]; // pinky→thumb tip indices
 const RIGHT_TIPS = [4,  8, 12, 16, 20]; // thumb→pinky tip indices
+
+const perf = createPerfMonitor();
 
 let handLandmarker = null;
 let shared = null;
@@ -321,7 +323,7 @@ function detect() {
   ctx.drawImage(video, 0, 0, w, h);
   if (results) drawHandDots(ctx, results, w, h);
   drawEQPanel(ctx, w, h);
-  drawTimer(ctx, lastDetectionMs, w, h);
+  perf.draw(ctx, lastDetectionMs, w, h);
 
   if (!audioCtx) {
     ctx.save();

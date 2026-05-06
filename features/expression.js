@@ -1,6 +1,6 @@
 import { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
-import { drawTimer } from "../lib/detectionTimer.js";
+import { createPerfMonitor } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -28,6 +28,8 @@ const BLENDSHAPE_LABELS = {
 };
 
 const THRESHOLD = 0.3;
+
+const perf = createPerfMonitor();
 
 let faceLandmarker = null;
 let animationId = null;
@@ -124,6 +126,6 @@ function detect() {
     }
   }
 
-  drawTimer(ctx, lastDetectionMs, w, h);
+  perf.draw(ctx, lastDetectionMs, w, h);
   animationId = requestAnimationFrame(detect);
 }

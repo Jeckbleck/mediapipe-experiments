@@ -1,6 +1,6 @@
 import { GestureRecognizer } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
-import { drawTimer } from "../lib/detectionTimer.js";
+import { createPerfMonitor } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
@@ -15,6 +15,8 @@ const GESTURE_LABELS = {
   Victory: "Victory",
   ILoveYou: "I Love You",
 };
+
+const perf = createPerfMonitor();
 
 let gestureRecognizer = null;
 let animationId = null;
@@ -84,6 +86,6 @@ function detect() {
     }
   }
 
-  drawTimer(ctx, lastDetectionMs, w, h);
+  perf.draw(ctx, lastDetectionMs, w, h);
   animationId = requestAnimationFrame(detect);
 }

@@ -2,7 +2,7 @@ import { HandLandmarker, ImageSegmenter } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
 import { dist2D } from "../lib/math.js";
 import { createPersonCutout } from "../lib/segMask.js";
-import { drawTimer } from "../lib/detectionTimer.js";
+import { createPerfMonitor } from "../lib/detectionTimer.js";
 
 const HAND_MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 const SEG_MODEL  = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
@@ -14,6 +14,8 @@ const COUNTDOWN = 3000;
 const LS_KEY    = "customSigns_v1";
 
 const cutoutPerson = createPersonCutout(BG_CAT);
+
+const perf = createPerfMonitor();
 
 let handLandmarker = null;
 let segmenter      = null;
@@ -462,7 +464,7 @@ function detect() {
   drawHandDots(ctx, lastL, lastR, w, h);
   drawDetectionOverlay(ctx, w, h);
   drawRecordOverlay(ctx, w, h);
-  drawTimer(ctx, lastDetectionMs, w, h);
+  perf.draw(ctx, lastDetectionMs, w, h);
 
   animId = requestAnimationFrame(detect);
 }

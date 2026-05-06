@@ -1,6 +1,6 @@
 import { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
-import { drawTimer } from "../lib/detectionTimer.js";
+import { createPerfMonitor } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -115,9 +115,12 @@ const SMOOTHING = 0.15;
 // Bar chart scale — raw score at which the bar reaches full width
 const BAR_SCALE = 0.45;
 
+const perf = createPerfMonitor();
+
 let faceLandmarker = null;
 let animationId = null;
 let lastVideoTime = -1;
+let lastDetectionMs = 0;
 let shared = null;
 
 const smoothed = Object.fromEntries(Object.keys(EMOTIONS).map((k) => [k, 0]));
@@ -259,7 +262,7 @@ function detect() {
     lastVideoTime = video.currentTime;
     const t0 = performance.now();
     const results = faceLandmarker.detectForVideo(video, now);
-    const detectionMs = performance.now() - t0;
+    lastDetectionMs = performance.now() - t0;
 
     ctx.drawImage(video, 0, 0);
 
@@ -276,8 +279,8 @@ function detect() {
     } else {
       overlay.textContent = "No face detected";
     }
-    drawTimer(ctx, detectionMs, canvas.width, canvas.height);
   }
 
+  perf.draw(ctx, lastDetectionMs, canvas.width, canvas.height);
   animationId = requestAnimationFrame(detect);
 }

@@ -1,6 +1,6 @@
 import { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
-import { drawTimer } from "../lib/detectionTimer.js";
+import { createPerfMonitor } from "../lib/detectionTimer.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -128,9 +128,12 @@ function drawPropImage(ctx, name, anchorX, anchorY, angle, drawWidth, svgW, svgH
   ctx.restore();
 }
 
+const perf = createPerfMonitor();
+
 let faceLandmarker = null;
 let animationId = null;
 let lastVideoTime = -1;
+let lastDetectionMs = 0;
 let shared = null;
 let uiSetup = false;
 
@@ -396,7 +399,7 @@ function detect() {
     lastVideoTime = video.currentTime;
     const t0 = performance.now();
     const results = faceLandmarker.detectForVideo(video, now);
-    const detectionMs = performance.now() - t0;
+    lastDetectionMs = performance.now() - t0;
 
     ctx.clearRect(0, 0, w, h);
     ctx.save();
@@ -434,8 +437,8 @@ function detect() {
       overlay.textContent = "No face";
       posePrompt.classList.add("hidden");
     }
-    drawTimer(ctx, detectionMs, w, h);
   }
 
+  perf.draw(ctx, lastDetectionMs, w, h);
   animationId = requestAnimationFrame(detect);
 }
