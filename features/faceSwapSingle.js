@@ -1,6 +1,7 @@
 import { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { getFileset } from "../lib/vision.js";
 import { warpReferenceFaceOntoTarget } from "../lib/faceSwap.js";
+import { referenceFromFile } from "../lib/referenceUpload.js";
 
 const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -72,19 +73,50 @@ function buildReferenceGrid() {
   if (!grid) return;
   grid.innerHTML = "";
 
-  REFERENCE_IMAGES.forEach((img) => {
-    const div = document.createElement("div");
-    div.className = "reference-option";
-    const image = document.createElement("img");
-    image.src = img.url;
-    image.alt = img.name;
-    image.crossOrigin = "anonymous";
-    // Local reference faces are gitignored, so drop tiles whose image isn't deployed
-    image.onerror = () => div.remove();
-    div.appendChild(image);
-    div.addEventListener("click", () => selectReference(img, div));
-    grid.appendChild(div);
+  grid.appendChild(buildUploadTile(grid));
+  REFERENCE_IMAGES.forEach((img) => grid.appendChild(buildReferenceTile(img)));
+}
+
+function buildReferenceTile(img) {
+  const div = document.createElement("div");
+  div.className = "reference-option";
+  const image = document.createElement("img");
+  image.src = img.url;
+  image.alt = img.name;
+  image.crossOrigin = "anonymous";
+  // Local reference faces are gitignored, so drop tiles whose image isn't deployed
+  image.onerror = () => div.remove();
+  div.appendChild(image);
+  div.addEventListener("click", () => selectReference(img, div));
+  return div;
+}
+
+function buildUploadTile(grid) {
+  const label = document.createElement("label");
+  label.className = "reference-option reference-upload";
+  label.title = "Upload your own photo";
+  label.textContent = "+";
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.hidden = true;
+  input.addEventListener("change", () => {
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    let ref;
+    try {
+      ref = referenceFromFile(file);
+    } catch (e) {
+      if (shared) shared.statusEl.textContent = e.message;
+      return;
+    }
+    const tile = buildReferenceTile(ref);
+    label.after(tile);
+    selectReference(ref, tile);
   });
+  label.appendChild(input);
+  return label;
 }
 
 async function selectReference(img, divEl) {
