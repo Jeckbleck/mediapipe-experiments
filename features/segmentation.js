@@ -6,10 +6,10 @@ const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 
 const BACKGROUNDS = [
-  { name: "Beach", url: "/backgrounds/beach.jpg" },
-  { name: "Office", url: "/backgrounds/office.jpg" },
-  { name: "Space", url: "/backgrounds/space.jpg" },
-  { name: "Living Room", url: "/backgrounds/living-room.jpg" },
+  { name: "Beach", url: `${import.meta.env.BASE_URL}backgrounds/beach.jpg` },
+  { name: "Office", url: `${import.meta.env.BASE_URL}backgrounds/office.jpg` },
+  { name: "Space", url: `${import.meta.env.BASE_URL}backgrounds/space.jpg` },
+  { name: "Living Room", url: `${import.meta.env.BASE_URL}backgrounds/living-room.jpg` },
 ];
 
 const BACKGROUND_CATEGORY = 0;

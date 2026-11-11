@@ -6,10 +6,10 @@ const MODEL_PATH =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
 const REFERENCE_IMAGES = [
-  { name: "Donnie", url: "/reference-faces/donnie.jpg" },
-  { name: "Ye", url: "/reference-faces/ye.jpg" },
-  { name: "Person 3", url: "/reference-faces/bale.jpg" },
-  { name: "Person 4", url: "/reference-faces/kim.jpg" },
+  { name: "Donnie", url: `${import.meta.env.BASE_URL}reference-faces/donnie.jpg` },
+  { name: "Ye", url: `${import.meta.env.BASE_URL}reference-faces/ye.jpg` },
+  { name: "Person 3", url: `${import.meta.env.BASE_URL}reference-faces/bale.jpg` },
+  { name: "Person 4", url: `${import.meta.env.BASE_URL}reference-faces/kim.jpg` },
   { name: "Person 5", url: "https://randomuser.me/api/portraits/men/45.jpg" },
   { name: "Person 6", url: "https://randomuser.me/api/portraits/women/32.jpg" },
 ];
@@ -79,6 +79,8 @@ function buildReferenceGrid() {
     image.src = img.url;
     image.alt = img.name;
     image.crossOrigin = "anonymous";
+    // Local reference faces are gitignored, so drop tiles whose image isn't deployed
+    image.onerror = () => div.remove();
     div.appendChild(image);
     div.addEventListener("click", () => selectReference(img, div));
     grid.appendChild(div);
